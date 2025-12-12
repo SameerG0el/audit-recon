@@ -24,7 +24,7 @@ st.markdown("*Live Digital Investigation Demo*")
 
 # --- SIMULATION ENGINE (30-40% Risk Probability) ---
 def simulate_internal_discovery():
-    [cite_start]"""Simulates checking internal CRM and Document systems."""
+    """Simulates checking internal CRM and Document systems."""
     time.sleep(1.5) # Simulate processing time
     
     # 35% Chance of finding an issue
@@ -40,7 +40,7 @@ def simulate_internal_discovery():
         return {"status": "Clear", "color": "green", "detail": "✅ All mandatory internal documents present."}
 
 def simulate_regulatory_check():
-    [cite_start]"""Simulates checking FINRA/IAPD/RegEd [cite: 62-69]."""
+    """Simulates checking FINRA/IAPD/RegEd."""
     time.sleep(1.2)
     
     # 30% Chance of finding an issue
@@ -57,7 +57,7 @@ def simulate_regulatory_check():
 
 # --- REAL INTELLIGENCE ENGINE ---
 def run_google_test(name, city, api_key):
-    [cite_start]"""Executes the 'Google Test' via SerpApi [cite: 27-33]."""
+    """Executes the 'Google Test' via SerpApi."""
     if not api_key:
         return None, "API Key Missing"
         
@@ -69,7 +69,7 @@ def run_google_test(name, city, api_key):
         return None, str(e)
 
 def run_compliance_crawl(url, api_key):
-    [cite_start]"""Crawls the website for risk keywords via Exa [cite: 42-61]."""
+    """Crawls the website for risk keywords via Exa."""
     if not api_key:
         return None, "API Key Missing"
         
@@ -82,7 +82,7 @@ def run_compliance_crawl(url, api_key):
         return None, str(e)
 
 def analyze_risk_keywords(text):
-    [cite_start]"""Scans text for prohibited keyword clusters [cite: 58-61]."""
+    """Scans text for prohibited keyword clusters."""
     risk_keywords = {
         "Promissory / Guarantees": ["guaranteed return", "risk-free", "no loss", "guaranteed income"], 
         "Unapproved Products": ["crypto", "private equity", "hedge fund", "bitcoin", "ethereum"], 
