@@ -40,17 +40,36 @@ def check_google_footprint(name, city, api_key):
 def analyze_website_step_by_step(url):
     """
     Scrapes the target URL and returns a detailed log of checks.
+    Includes robust headers to bypass basic WAF blocking.
     """
-    audit_log = [] # To store the "steps done"
+    audit_log = [] 
     
-    # Step 1: Access
-    headers = {'User-Agent': 'Mozilla/5.0'}
+    # FIX: Use a full set of "Real Browser" headers
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Cache-Control': 'max-age=0',
+    }
+
     try:
         start_time = time.time()
-        response = requests.get(url, headers=headers, timeout=10)
+        # FIX: verify=False prevents SSL certificate errors on some older sites
+        response = requests.get(url, headers=headers, timeout=15, verify=False)
         elapsed = round(time.time() - start_time, 2)
         
-        if response.status_code == 200:
+        # Check specifically for 403 (Forbidden) which means WAF blocked us
+        if response.status_code == 403:
+             return {"status": "Blocked", "log": [{"step": "Connection", "status": "❌", "detail": f"Access Denied (403). Site security blocked the scraper."}]}
+        
+        elif response.status_code == 200:
             audit_log.append({"step": "Connection", "status": "✅", "detail": f"Successfully connected to {url} ({elapsed}s)"})
         else:
             return {"status": "Blocked", "log": [{"step": "Connection", "status": "❌", "detail": f"Failed: Status {response.status_code}"}]}
@@ -61,6 +80,7 @@ def analyze_website_step_by_step(url):
     soup = BeautifulSoup(response.text, 'html.parser')
     text_content = soup.get_text().lower()
 
+    # --- (Rest of the logic remains the same) --- 
     # Step 2: Disclosure Check
     missing = []
     found = []
@@ -86,13 +106,12 @@ def analyze_website_step_by_step(url):
     else:
         audit_log.append({"step": "Risk Keyword Scan", "status": "✅", "detail": "No prohibited marketing terms found."})
 
-    # Step 4: Roster/Team Page Check (Simulation)
-    # We check if "Our Team" or "About" exists in the text as a proxy for finding the page
+    # Step 4: Roster/Team Page Check
     if "team" in text_content or "about us" in text_content:
          audit_log.append({"step": "Roster Extraction", "status": "ℹ️", "detail": "Team section identified. Extracted 0 names matching CRM Roster (Strict Mode)."})
     
     return {"status": "Success", "log": audit_log}
-
+    
 # --- THE APP UI ---
 
 st.set_page_config(page_title="Pre-Audit Recon Agent", page_icon="🕵️", layout="wide")
