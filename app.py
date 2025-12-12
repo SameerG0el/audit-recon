@@ -2,7 +2,8 @@ import streamlit as st
 import random
 import time
 import requests
-from bs4 import BeautifulSoupfrom exa_py import Exa
+from bs4 import BeautifulSoup
+from exa_py import Exa
 from serpapi import GoogleSearch
 
 # --- CONFIGURATION & ASSETS ---
