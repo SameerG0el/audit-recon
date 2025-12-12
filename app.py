@@ -56,7 +56,7 @@ def simulate_regulatory_check():
 
 # --- REAL INTELLIGENCE ENGINE ---
 def run_google_test(name, city, api_key):
-    [cite_start]"""Executes the 'Google Test' via SerpApi [cite: 27-33]."""
+    """Executes the 'Google Test' via SerpApi."""
     if not api_key:
         return None, "API Key Missing"
         
@@ -68,7 +68,7 @@ def run_google_test(name, city, api_key):
         return None, str(e)
 
 def run_compliance_crawl(url, api_key):
-    [cite_start]"""Crawls the specific website URL for risk keywords via Exa [cite: 42-61]."""
+    """Crawls the specific website URL for risk keywords via Exa."""
     if not api_key:
         return None, "API Key Missing"
         
@@ -81,7 +81,7 @@ def run_compliance_crawl(url, api_key):
         return None, str(e)
 
 def analyze_risk_keywords(text):
-    [cite_start]"""Scans text for prohibited keyword clusters [cite: 58-61]."""
+    """Scans text for prohibited keyword clusters."""
     risk_keywords = {
         "Promissory / Guarantees": ["guaranteed return", "risk-free", "no loss", "guaranteed income"], 
         "Unapproved Products": ["crypto", "private equity", "hedge fund", "bitcoin", "ethereum"], 
