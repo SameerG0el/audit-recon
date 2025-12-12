@@ -27,20 +27,26 @@ with col2:
     city = st.text_input("City/Location", placeholder="e.g. New York")
 
 # 3. MAIN LOGIC
-if st.button("Run Pre-Audit Recon") and serpapi_key and exa_api_key and advisor_name:
+# We use a single button here to avoid the "DuplicateElementId" error
+if st.button("Run Pre-Audit Recon", type="primary"):
     
+    # Check if inputs are missing
+    if not (serpapi_key and exa_api_key and advisor_name and city):
+        st.warning("⚠️ Please enter Advisor Name, City, and ensure API keys are set.")
+        st.stop() # Stop execution here if inputs are missing
+
+    # If inputs are good, proceed with the logic
     status_container = st.status("Initializing Investigation...", expanded=True)
     
     try:
         # --- PHASE 1: DIGITAL FOOTPRINT (SerpApi) ---
-        # PRD Step 2: "Generate search queries... [First Name] [Last Name] financial advisor [City]" [cite: 30]
         status_container.write("🔍 Phase 1: Executing Google Search Strategy (SerpApi)...")
         
         query = f"{advisor_name} financial advisor {city}"
         search_params = {
             "q": query,
             "api_key": serpapi_key,
-            "num": 3  # We only need top results to find the main site
+            "num": 3
         }
         
         search = GoogleSearch(search_params)
@@ -60,13 +66,11 @@ if st.button("Run Pre-Audit Recon") and serpapi_key and exa_api_key and advisor_
             st.stop()
 
         # --- PHASE 2: COMPLIANCE CRAWL (Exa) ---
-        # PRD Step 3: "Automated review of the branch's client-facing website" 
         status_container.write("🕷️ Phase 2: Crawling Website Content (Exa)...")
         
         exa = Exa(exa_api_key)
         
         # Use Exa to get the contents of the specific URL found by SerpApi
-        # Note: We use get_contents (retrieve) rather than search here
         exa_response = exa.get_contents(
             ids=[target_url],
             text=True
@@ -81,12 +85,10 @@ if st.button("Run Pre-Audit Recon") and serpapi_key and exa_api_key and advisor_
         status_container.update(label="Investigation Complete", state="complete")
 
         # --- PHASE 3: RISK ANALYSIS ---
-        # PRD Step 3: Scan for "prohibited keyword clusters" [cite: 57]
         st.divider()
         st.subheader(f"📝 Pre-Audit Intelligence Brief: {advisor_name}")
         st.caption(f"Source: {target_url}")
 
-        # Defined in PRD Step 3 [cite: 58-61]
         risk_keywords = {
             "Promissory / Guarantees": ["Guaranteed returns", "Risk-free", "No loss", "Guaranteed income"], 
             "Unapproved Products": ["Crypto", "Private Equity", "Hedge Fund", "Bitcoin"], 
@@ -115,11 +117,8 @@ if st.button("Run Pre-Audit Recon") and serpapi_key and exa_api_key and advisor_
         with col_b:
             st.markdown("#### 📄 Content Preview")
             with st.expander("View Scraped Text", expanded=True):
-                st.text(page_content[:1500] + "...") # Show first 1500 chars
+                st.text(page_content[:1500] + "...") 
 
     except Exception as e:
         status_container.update(label="Error", state="error")
         st.error(f"System Error: {str(e)}")
-
-elif st.button("Run Pre-Audit Recon"):
-    st.warning("⚠️ Please enter Advisor Name, City, and ensure API keys are set.")
