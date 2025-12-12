@@ -24,7 +24,7 @@ st.markdown("*Live Digital Investigation Demo*")
 
 # --- SIMULATION ENGINE (30-40% Risk Probability) ---
 def simulate_internal_discovery():
-    [cite_start]"""Simulates checking internal CRM and Document systems [cite: 14-26]."""
+    [cite_start]"""Simulates checking internal CRM and Document systems."""
     time.sleep(1.5) # Simulate processing time
     
     # 35% Chance of finding an issue
