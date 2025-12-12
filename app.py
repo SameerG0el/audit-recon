@@ -1,7 +1,8 @@
 import streamlit as st
 import random
 import time
-from exa_py import Exa
+import requests
+from bs4 import BeautifulSoupfrom exa_py import Exa
 from serpapi import GoogleSearch
 
 # --- CONFIGURATION & ASSETS ---
@@ -68,17 +69,53 @@ def run_google_test(name, city, api_key):
         return None, str(e)
 
 def run_compliance_crawl(url, api_key):
-    """Crawls the specific website URL for risk keywords via Exa."""
+    """
+    Crawls URL via Exa. 
+    Falls back to BeautifulSoup if Exa fails.
+    """
     if not api_key:
         return None, "API Key Missing"
-        
+
+    # 1. URL Sanitization: Ensure it starts with http/https
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+
+    # 2. Try Exa First (The "Smart" Way)
     exa = Exa(api_key)
     try:
-        # Get clean text content
         response = exa.get_contents(ids=[url], text=True)
-        return response.results[0], None
+        if response.results:
+            return response.results[0], None
     except Exception as e:
-        return None, str(e)
+        # Just log error internally and move to fallback
+        print(f"Exa failed: {e}") 
+
+    # 3. Fallback: BeautifulSoup (The "Manual" Way)
+    try:
+        # Masquerade as a real browser to avoid 403 blocks
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36"
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status() # Check for 404/403/500 errors
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Kill all script and style elements to clean up text
+        for script in soup(["script", "style"]):
+            script.decompose()
+            
+        text = soup.get_text(separator=' ', strip=True)
+        
+        # Create a "Mock" object to match Exa's structure so the rest of the app doesn't break
+        class MockResult:
+            def __init__(self, text):
+                self.text = text
+                
+        return MockResult(text), None
+
+    except Exception as e:
+        return None, f"Scraping Failed (Both Exa & Fallback): {str(e)}"
 
 def analyze_risk_keywords(text):
     """Scans text for prohibited keyword clusters."""
