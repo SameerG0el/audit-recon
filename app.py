@@ -13,7 +13,6 @@ st.set_page_config(
 )
 
 # Load Branding
-# We try to load the logo; if it fails (file missing), we just show text.
 try:
     st.image("pitcrew-1.png", width=250)
 except Exception:
@@ -57,7 +56,7 @@ def simulate_regulatory_check():
 
 # --- REAL INTELLIGENCE ENGINE ---
 def run_google_test(name, city, api_key):
-    """Executes the 'Google Test' via SerpApi."""
+    [cite_start]"""Executes the 'Google Test' via SerpApi [cite: 27-33]."""
     if not api_key:
         return None, "API Key Missing"
         
@@ -69,7 +68,7 @@ def run_google_test(name, city, api_key):
         return None, str(e)
 
 def run_compliance_crawl(url, api_key):
-    """Crawls the website for risk keywords via Exa."""
+    [cite_start]"""Crawls the specific website URL for risk keywords via Exa [cite: 42-61]."""
     if not api_key:
         return None, "API Key Missing"
         
@@ -82,7 +81,7 @@ def run_compliance_crawl(url, api_key):
         return None, str(e)
 
 def analyze_risk_keywords(text):
-    """Scans text for prohibited keyword clusters."""
+    [cite_start]"""Scans text for prohibited keyword clusters [cite: 58-61]."""
     risk_keywords = {
         "Promissory / Guarantees": ["guaranteed return", "risk-free", "no loss", "guaranteed income"], 
         "Unapproved Products": ["crypto", "private equity", "hedge fund", "bitcoin", "ethereum"], 
@@ -112,20 +111,22 @@ with st.sidebar:
     if not (serpapi_key and exa_api_key):
         st.error("⚠️ API Keys missing in secrets.toml!")
 
-# Main Inputs
-col_input1, col_input2, col_btn = st.columns([2, 2, 1])
-with col_input1:
-    advisor_name = st.text_input("Advisor Name", placeholder="e.g. John Doe", value="John Smith")
-with col_input2:
+# Main Inputs - UPDATED LAYOUT
+col1, col2, col3 = st.columns([1, 1, 2])
+
+with col1:
+    advisor_name = st.text_input("Advisor Name", placeholder="e.g. John Smith", value="John Smith")
+with col2:
     city_loc = st.text_input("City / Firm", placeholder="e.g. New York", value="New York")
-with col_btn:
-    st.write("") # Spacing
-    st.write("") 
-    run_btn = st.button("🚀 Run Audit", type="primary", use_container_width=True)
+with col3:
+    # Explicit URL Input
+    target_url_input = st.text_input("Target Website URL", placeholder="https://www.example.com")
+
+run_btn = st.button("🚀 Run Audit", type="primary", use_container_width=True)
 
 if run_btn:
-    if not (advisor_name and city_loc):
-        st.warning("Please enter Advisor Name and Location.")
+    if not (advisor_name and city_loc and target_url_input):
+        st.warning("⚠️ Please provide Advisor Name, City, and the Target Website URL.")
         st.stop()
 
     # CONTAINER: Live Process Log
@@ -141,24 +142,19 @@ if run_btn:
         reg_result = simulate_regulatory_check()
         st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;↳ {reg_result['detail']}")
 
-        # 3. REAL: Google Search
+        # 3. REAL: Google Search (Reputation Check)
         st.write(f"🔍 Executing 'Google Test' for: *{advisor_name}*...")
         search_data, search_err = run_google_test(advisor_name, city_loc, serpapi_key)
         
-        target_url = None
         if search_data and "organic_results" in search_data:
-            # We pick the first result that looks like a real website (basic logic)
-            top_result = search_data["organic_results"][0]
-            target_url = top_result.get("link")
-            st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;✅ Target Identity Found: [{top_result.get('title')}]({target_url})")
+            count = len(search_data["organic_results"])
+            st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;✅ Found {count} reputation signals.")
         else:
-            st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;❌ Search Failed: {search_err}")
-            status.update(label="Investigation Halted: Target Not Found", state="error")
-            st.stop()
+            st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;⚠️ Google Search returned no results (Continuing to website audit...)")
 
-        # 4. REAL: Website Crawl
-        st.write(f"🕷️ Deploying Exa Crawler to: *{target_url}*...")
-        crawl_data, crawl_err = run_compliance_crawl(target_url, exa_api_key)
+        # 4. REAL: Website Crawl (Manual Input)
+        st.write(f"🕷️ Deploying Exa Crawler to Target: *{target_url_input}*...")
+        crawl_data, crawl_err = run_compliance_crawl(target_url_input, exa_api_key)
         
         risk_flags = []
         if crawl_data:
@@ -181,7 +177,7 @@ if run_btn:
     # LEFT COLUMN: Digital Footprint (Google Results)
     with col_left:
         st.subheader("🌐 Digital Footprint")
-        st.caption("Live Search Results (SerpApi)")
+        st.caption(f"Reputation Check: {advisor_name} ({city_loc})")
         
         if search_data and "organic_results" in search_data:
             for res in search_data["organic_results"][:4]:
@@ -189,11 +185,12 @@ if run_btn:
                     st.markdown(f"**[{res.get('title')}]({res.get('link')})**")
                     st.caption(res.get("snippet"))
                     
-                    # Quick logic to flag obvious social media
                     if "linkedin" in res.get("link", ""):
                         st.info("ℹ️ **OBA Check**: Verify this LinkedIn profile matches CRM records.")
+        elif search_err:
+             st.error(f"Search API Error: {search_err}")
         else:
-            st.warning("No search data available.")
+            st.warning("No public search results found.")
 
         # Display Simulated Regulatory Data here as context
         st.markdown("---")
@@ -207,7 +204,7 @@ if run_btn:
     # RIGHT COLUMN: Website Content Analysis (Exa Results)
     with col_right:
         st.subheader("📝 Website Compliance Audit")
-        st.caption(f"Source: {target_url}")
+        st.caption(f"Source: {target_url_input}")
         
         if crawl_data:
             # 1. Risk Flags Section
@@ -223,7 +220,7 @@ if run_btn:
                 st.text(crawl_data.text[:2000] + "...")
                 st.caption("... (Truncated for view) ...")
         else:
-            st.warning("Website content could not be analyzed.")
+            st.warning("Website content could not be analyzed. Check the URL and try again.")
 
         # Display Simulated Internal Data here as context
         st.markdown("---")
