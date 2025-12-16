@@ -154,6 +154,9 @@ left_spacer, main_content, right_spacer = st.columns([1, 4, 1])
 
 # 2. Use a 'with' block to put everything inside that center column
     # Main Inputs - UPDATED LAYOUT
+with main_content:
+    
+    # 3. Your original code goes here, properly indented
     col1, col2, col3 = st.columns([1, 1, 2])
     
     with col1:
